@@ -15,14 +15,15 @@ RUN apt-get update \
 # skip installing gem documentation
 RUN mkdir -p /usr/local/etc \
 	&& { \
-		echo 'install: --no-document'; \
-		echo 'update: --no-document'; \
-	} >> /usr/local/etc/gemrc
+		echo 'install: --no-rdoc --no-ri'; \
+		echo 'update: --no-rdoc --no-ri'; \
+	} >> /usr/local/etc/gemrc \
+	&& cp /usr/local/etc/gemrc /etc
 
-ENV RUBY_MAJOR 2.1
-ENV RUBY_VERSION 2.1.10
-ENV RUBY_DOWNLOAD_SHA256 fb2e454d7a5e5a39eb54db0ec666f53eeb6edc593d1d2b970ae4d150b831dd20
-ENV RUBYGEMS_VERSION 2.6.8
+ENV RUBY_MAJOR 1.8
+ENV RUBY_VERSION 1.8.7-p374
+ENV RUBY_DOWNLOAD_SHA256 876eeeaaeeab10cbf4767833547d66d86d6717ef48fd3d89e27db8926a65276c
+ENV RUBYGEMS_VERSION 1.6.2
 
 # some of ruby's build scripts are written in ruby
 #   we purge system ruby later to make sure our final image uses what we just built
@@ -70,13 +71,14 @@ RUN set -ex \
 	&& make -j"$(nproc)" \
 	&& make install \
 	\
+	&& wget https://rubygems.org/rubygems/rubygems-$RUBYGEMS_VERSION.tgz -O - | tar -xz \
+	&& ruby rubygems-$RUBYGEMS_VERSION/setup.rb \
+	\
 	&& apt-get purge -y --auto-remove $buildDeps \
 	&& cd / \
-	&& rm -r /usr/src/ruby \
-	\
-	&& gem update --system "$RUBYGEMS_VERSION"
+	&& rm -r /usr/src/ruby
 
-ENV BUNDLER_VERSION 1.13.6
+ENV BUNDLER_VERSION 1.12.6
 
 RUN gem install bundler --version "$BUNDLER_VERSION"
 
